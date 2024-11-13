@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     //
-    public function register(Request $request): void{
+    public function register(Request $request) {
         $validatedData = $request->validate(rules: [
         'name'=>['required','string','max:255'],
         'email'=>['required','string','email','max:255','unique:users'],
@@ -37,6 +37,48 @@ class AuthController extends Controller
             "msg"=>"Usuario creado satisfactoriamente",
             "count"=>1
         ]);
+    }
+
+    public function Login(Request $request) {
+        if(!Auth::attempt($request->only("email", "password"))){
+            return response()->json([
+                "success"=> false,
+                "error"=>[
+                    "code"=>401,
+                    "msd"=> "No se reconocen las credenciales"
+                ],
+                "data"=>"",
+                "count"=> 0
+                
+
+            ], 401);
+        }
+        $user = User::where("email", $request->email)->firstOrFail();
+        $token = $user->createToken("auth_token")->plainTextToken;
+
+        return response()->json([
+            "success"=> false,
+            "error"=>[
+                "code"=>200,
+                "msd"=> "No se reconocen las credenciales"
+            ],
+            "data"=>"",
+            "count"=> 0
+            
+
+        ], 200);
+    }
+
+    public function me(Request $request){
+        return response()->json([
+            "success"=> true,
+                 "error"=>[
+                    "code"=>200,
+                    "msg"=> ""
+                 ],
+                 "data"=>$request_>user(),
+                 "count"=> 1
+                ], 200);
     }
 
 }
