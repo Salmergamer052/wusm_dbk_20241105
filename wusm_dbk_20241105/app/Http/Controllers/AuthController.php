@@ -5,26 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     //
-    public function register(Request $request) {
-        $validatedData = $request->validate(rules: [
-        'name'=>['required','string','max:255'],
-        'email'=>['required','string','email','max:255','unique:users'],
-        'password'=>['required','string','min:8','max:20'],
+    public function register(Request $request){
+        $validatedData = $request->validate([
+            'name'=>['required','string','max:255'],
+            'email'=>['required','string','email','max:255','unique:users'],
+            'password'=>['required','string','min:8','max:20'],
         ]);
 
-        $user = User::create(attributes:[
+        $user = User::create([
             'name'=> $validatedData['name'],
             'email'=> $validatedData['email'],
-            'password'=> Hash::make(value: $validatedData['password']),
+            'password'=> Hash::make($validatedData['password']),
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json(data: [
+        return response()->json([
             "success"=> true,
             "errors"=>[
                 "code"=>0,
@@ -39,46 +40,49 @@ class AuthController extends Controller
         ]);
     }
 
-    public function Login(Request $request) {
-        if(!Auth::attempt($request->only("email", "password"))){
-            return response()->json([
+
+
+    public function login(Request $request) {
+        if(!Auth::attempt($request->only( "email","password"))){
+            return response()->json( [
                 "success"=> false,
-                "error"=>[
+                "errors"=>[
                     "code"=>401,
-                    "msd"=> "No se reconocen las credenciales"
+                    "msg"=> "No se reconocen las credenciales"
                 ],
                 "data"=>"",
                 "count"=> 0
-                
-
             ], 401);
+
         }
         $user = User::where("email", $request->email)->firstOrFail();
         $token = $user->createToken("auth_token")->plainTextToken;
 
-        return response()->json([
-            "success"=> false,
-            "error"=>[
+        return response()->json( [
+            "success"=> true,
+            "errors"=>[
                 "code"=>200,
-                "msd"=> "No se reconocen las credenciales"
+                "msg"=> ""
             ],
-            "data"=>"",
-            "count"=> 0
-            
+            "data"=>[
+                "access_token"=>$token,
+                "token_type"=> "Bearer"
+            ],
+            "count"=> 1
+        ], 200);
+    
+    
+    }
 
+    public function me(Request $request) {
+        return response()->json( [
+            "success"=> true,
+            "errors"=>[
+                "code"=>200,
+                "msg"=> ""
+            ],
+            "data"=>$request->user(),
+            "count"=> 1
         ], 200);
     }
-
-    public function me(Request $request){
-        return response()->json([
-            "success"=> true,
-                 "error"=>[
-                    "code"=>200,
-                    "msg"=> ""
-                 ],
-                 "data"=>$request_>user(),
-                 "count"=> 1
-                ], 200);
-    }
-
 }
